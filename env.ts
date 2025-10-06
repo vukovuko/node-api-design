@@ -63,24 +63,18 @@ const envSchema = z.object({
 export type Env = z.infer<typeof envSchema>;
 
 // Parse and validate environment variables
-let env: Env;
-
-try {
-  env = envSchema.parse(process.env);
-} catch (error) {
-  if (error instanceof z.ZodError) {
-    console.error("❌ Invalid environment variables:");
-    console.error(JSON.stringify(error.flatten().fieldErrors, null, 2));
-
-    // More detailed error messages
-    error.issues.forEach((err) =>
-      console.error(`  ${err.path.join(".")}: ${err.message}`)
-    );
-
-    process.exit(1);
+const parsed = envSchema.safeParse(process.env);
+if (!parsed.success) {
+  console.error("❌ Invalid environment variables:");
+  console.error(JSON.stringify(z.treeifyError(parsed.error), null, 2));
+  for (const issue of parsed.error.issues) {
+    const prefix = issue.path.length ? issue.path.join(".") + ": " : "";
+    console.error(`  ${prefix}${issue.message}`);
   }
-  throw error;
+  process.exit(1);
 }
+
+const env = parsed.data;
 
 // Helper functions for environment checks
 export const isProd = () => env.NODE_ENV === "production";
