@@ -59,11 +59,9 @@ const envSchema = z.object({
     .default(isProduction ? "info" : "debug"),
 });
 
-// Type for the validated environment
-export type Env = z.infer<typeof envSchema>;
-
 // Parse and validate environment variables
 const parsed = envSchema.safeParse(process.env);
+
 if (!parsed.success) {
   console.error("❌ Invalid environment variables:");
 
@@ -73,6 +71,9 @@ if (!parsed.success) {
 }
 
 const env = parsed.data;
+
+// Type for the validated environment
+export type Env = z.infer<typeof envSchema>;
 
 // Helper functions for environment checks
 export const isProd = () => env.NODE_ENV === "production";
