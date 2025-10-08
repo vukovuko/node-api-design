@@ -1,31 +1,108 @@
 import { Router } from "express";
 import { z } from "zod";
+import {
+  createHabit,
+  getUserHabits,
+  getHabitById,
+  updateHabit,
+  deleteHabit,
+  logHabitCompletion,
+  completeHabit,
+  getHabitsByTag,
+  addTagsToHabit,
+  removeTagFromHabit,
+} from "../controllers/habitController.ts";
+import { authenticateToken } from "../middleware/auth.ts";
 import { validate } from "../middleware/validation.ts";
-
-const createHabitSchema = z.object({
-  name: z.string(),
-});
 
 const router = Router();
 
-router.get("/", async (req, res) => {
-  res.status(200).json({ message: "habit" });
+// Apply authentication to all routes
+router.use(authenticateToken);
+
+// Validation schemas
+const createHabitSchema = z.object({
+  name: z.string().min(1, "Habit name is required").max(100, "Name too long"),
+  description: z.string().optional(),
+  frequency: z.enum(["daily", "weekly", "monthly"] as const, {
+    message: "Frequency must be daily, weekly, or monthly",
+  }),
+  targetCount: z.number().int().positive().optional().default(1),
+  tagIds: z.array(z.uuid()).optional(),
 });
 
-router.get("/:id", (req, res) => {
-  res.status(200).json({ message: `Got one habit by id ${req.params.id}` });
+const updateHabitSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  description: z.string().optional(),
+  frequency: z.enum(["daily", "weekly", "monthly"]).optional(),
+  targetCount: z.number().int().positive().optional(),
+  isActive: z.boolean().optional(),
+  tagIds: z.array(z.uuid()).optional(),
 });
 
-router.post("/", validate(createHabitSchema, "body"), (req, res) => {
-  res.status(201).json({ message: "created habit" });
+const uuidSchema = z.object({
+  id: z.uuid("Invalid habit ID format"),
 });
 
-router.delete("/:id", (req, res) => {
-  res.status(204).send();
+const habitIdSchema = z.object({
+  habitId: z.uuid("Invalid habit ID format"),
 });
 
-router.post("/:id/complete", (req, res) => {
-  res.status(200).json({ message: "completed habit" });
+const logCompletionSchema = z.object({
+  note: z.string().optional(),
 });
+
+const tagIdSchema = z.object({
+  tagId: z.uuid("Invalid tag ID format"),
+});
+
+const habitTagSchema = z.object({
+  id: z.uuid("Invalid habit ID format"),
+  tagId: z.uuid("Invalid tag ID format"),
+});
+
+const addTagsSchema = z.object({
+  tagIds: z.array(z.uuid()).min(1, "At least one tag ID is required"),
+});
+
+// Routes
+router.get("/", getUserHabits);
+router.get("/:id", validate(uuidSchema, "params"), getHabitById);
+router.post("/", validate(createHabitSchema, "body"), createHabit);
+router.put(
+  "/:id",
+  validate(uuidSchema, "params"),
+  validate(updateHabitSchema, "body"),
+  updateHabit
+);
+router.delete("/:id", validate(uuidSchema, "params"), deleteHabit);
+router.post(
+  "/:habitId/log",
+  validate(habitIdSchema, "params"),
+  validate(logCompletionSchema, "body"),
+  logHabitCompletion
+);
+
+// Completion endpoint
+router.post(
+  "/:id/complete",
+  validate(uuidSchema, "params"),
+  validate(logCompletionSchema, "body"),
+  completeHabit
+);
+
+// Tag-related endpoints
+router.get("/tag/:tagId", validate(tagIdSchema, "params"), getHabitsByTag);
+router.post(
+  "/:id/tags",
+  validate(uuidSchema, "params"),
+  validate(addTagsSchema, "body"),
+  addTagsToHabit
+);
+router.delete(
+  "/:id/tags/:tagId",
+  validate(habitTagSchema, "params"),
+  removeTagFromHabit
+);
 
 export default router;

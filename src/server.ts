@@ -2,10 +2,10 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import { env, isDev, isTestEnv } from "../env.ts";
 import authRoutes from "./routes/authRoutes.ts";
 import habitRoutes from "./routes/habitRoutes.ts";
 import userRoutes from "./routes/userRoutes.ts";
-import env, { isTestEnv } from "../env.ts";
 
 const app = express();
 
@@ -24,9 +24,8 @@ app.use(
     skip: () => isTestEnv(),
   })
 );
-
 // Health check endpoint
-app.get("/health", (_req, res) => {
+app.get("/health", (req, res) => {
   res.status(200).json({
     status: "OK",
     timestamp: new Date().toISOString(),
@@ -39,24 +38,26 @@ app.use("/api/auth", authRoutes);
 app.use("/api/habits", habitRoutes);
 app.use("/api/users", userRoutes);
 
-app.use((_req, res) => {
+// 404 handler
+app.use((req, res) => {
   res.status(404).json({
-    success: false,
-    message: "Route not found",
+    error: "Route not found",
+    path: req.originalUrl,
   });
 });
 
+// Global error handler
 app.use(
   (
-    err: any,
-    _req: express.Request,
+    err: Error,
+    req: express.Request,
     res: express.Response,
-    _next: express.NextFunction
+    next: express.NextFunction
   ) => {
-    console.error(err);
-    res.status(err.status || 500).json({
-      success: false,
-      message: err.message || "Internal Server Error",
+    console.error(err.stack);
+    res.status(500).json({
+      error: "Something went wrong!",
+      ...(isDev() && { details: err.message }),
     });
   }
 );
