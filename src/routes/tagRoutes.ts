@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { authenticateToken } from "../middleware/auth.ts";
-import { validate } from "../middleware/validation.ts";
+import { validateBody, validateParams } from "../middleware/validation.ts";
 import {
   createTag,
   deleteTag,
@@ -38,19 +38,19 @@ const uuidSchema = z.object({
 
 router.get("/", getTags);
 router.get("/popular", getPopularTags);
-router.get("/:id", validate(uuidSchema, "params"), getTagById);
+router.get("/:id", validateParams(uuidSchema), getTagById);
 
 // Admin/User routes (authenticated users can manage tags)
-router.post("/", validate(createTagSchema, "body"), createTag);
+router.post("/", validateBody(createTagSchema), createTag);
 router.put(
   "/:id",
-  validate(uuidSchema, "params"),
-  validate(updateTagSchema, "body"),
+  validateParams(uuidSchema),
+  validateBody(updateTagSchema),
   updateTag
 );
-router.delete("/:id", validate(uuidSchema, "params"), deleteTag);
+router.delete("/:id", validateParams(uuidSchema), deleteTag);
 
 // User-specific routes
-router.get("/:id/habits", validate(uuidSchema, "params"), getTagHabits);
+router.get("/:id/habits", validateParams(uuidSchema), getTagHabits);
 
 export default router;

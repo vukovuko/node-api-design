@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { register, login } from "../controllers/authController.ts";
-import { validate } from "../middleware/validation.ts";
+import { validateBody } from "../middleware/validation.ts";
 import { insertUserSchema } from "../db/schema.ts";
 
 const router = Router();
@@ -24,7 +24,7 @@ const loginSchema = z.object({
 });
 
 // Routes
-router.post("/register", validate(insertUserSchema, "body"), register);
-router.post("/login", validate(loginSchema, "body"), login);
+router.post("/register", validateBody(insertUserSchema), register);
+router.post("/login", validateBody(loginSchema), login);
 
 export default router;

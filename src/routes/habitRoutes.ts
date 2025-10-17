@@ -13,7 +13,7 @@ import {
   removeTagFromHabit,
 } from "../controllers/habitController.ts";
 import { authenticateToken } from "../middleware/auth.ts";
-import { validate } from "../middleware/validation.ts";
+import { validateBody, validateParams } from "../middleware/validation.ts";
 
 const router = Router();
 
@@ -67,41 +67,41 @@ const addTagsSchema = z.object({
 
 // Routes
 router.get("/", getUserHabits);
-router.get("/:id", validate(uuidSchema, "params"), getHabitById);
-router.post("/", validate(createHabitSchema, "body"), createHabit);
+router.get("/:id", validateParams(uuidSchema), getHabitById);
+router.post("/", validateBody(createHabitSchema), createHabit);
 router.put(
   "/:id",
-  validate(uuidSchema, "params"),
-  validate(updateHabitSchema, "body"),
+  validateParams(uuidSchema),
+  validateBody(updateHabitSchema),
   updateHabit
 );
-router.delete("/:id", validate(uuidSchema, "params"), deleteHabit);
+router.delete("/:id", validateParams(uuidSchema), deleteHabit);
 router.post(
   "/:habitId/log",
-  validate(habitIdSchema, "params"),
-  validate(logCompletionSchema, "body"),
+  validateParams(habitIdSchema),
+  validateBody(logCompletionSchema),
   logHabitCompletion
 );
 
 // Completion endpoint
 router.post(
   "/:id/complete",
-  validate(uuidSchema, "params"),
-  validate(logCompletionSchema, "body"),
+  validateParams(uuidSchema),
+  validateBody(logCompletionSchema),
   completeHabit
 );
 
 // Tag-related endpoints
-router.get("/tag/:tagId", validate(tagIdSchema, "params"), getHabitsByTag);
+router.get("/tag/:tagId", validateParams(tagIdSchema), getHabitsByTag);
 router.post(
   "/:id/tags",
-  validate(uuidSchema, "params"),
-  validate(addTagsSchema, "body"),
+  validateParams(uuidSchema),
+  validateBody(addTagsSchema),
   addTagsToHabit
 );
 router.delete(
   "/:id/tags/:tagId",
-  validate(habitTagSchema, "params"),
+  validateParams(habitTagSchema),
   removeTagFromHabit
 );
 

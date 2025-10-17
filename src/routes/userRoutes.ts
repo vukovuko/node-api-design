@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { authenticateToken } from "../middleware/auth.ts";
-import { validate } from "../middleware/validation.ts";
+import { validateBody } from "../middleware/validation.ts";
 import {
   changePassword,
   getProfile,
@@ -32,7 +32,7 @@ const changePasswordSchema = z.object({
 
 // Routes
 router.get("/profile", getProfile);
-router.put("/profile", validate(updateProfileSchema, "body"), updateProfile);
-router.put("/password", validate(changePasswordSchema, "body"), changePassword);
+router.put("/profile", validateBody(updateProfileSchema), updateProfile);
+router.put("/password", validateBody(changePasswordSchema), changePassword);
 
 export default router;
